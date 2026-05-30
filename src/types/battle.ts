@@ -6,6 +6,8 @@ export type BattleEventType =
   | 'status_apply'
   | 'status_damage'
   | 'status_cure'
+  | 'stat_change'
+  | 'heal'
   | 'faint'
   | 'switch_in'
   | 'critical'

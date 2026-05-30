@@ -23,6 +23,10 @@ export interface PokemonIVs {
   speed: number;
 }
 
+export type WeatherEffect = 'rain' | 'sun' | 'sandstorm' | 'hail' | null;
+
+export type StatKey = 'atk' | 'def' | 'spAtk' | 'spDef' | 'speed';
+
 export interface MoveData {
   id: string;
   name: string;
@@ -33,6 +37,14 @@ export interface MoveData {
   category: 'physical' | 'special' | 'status';
   effect?: string;
   effectChance?: number;
+  priority?: number;
+  drain?: number;
+  recoil?: number;
+  multiHit?: [number, number];
+  selfStatChange?: Partial<Record<StatKey, number>>;
+  opponentStatChange?: Partial<Record<StatKey, number>>;
+  heal?: number;
+  weather?: WeatherEffect;
 }
 
 export interface Pokemon {
