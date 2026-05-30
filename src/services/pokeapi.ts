@@ -20,6 +20,22 @@ export function getAnimatedSpriteUrl(id: number): string {
   return `${SPRITE_BASE}/versions/generation-v/black-white/animated/${id}.gif`;
 }
 
+export function getBackSpriteUrl(id: number, shiny = false): string {
+  if (shiny) {
+    return `${SPRITE_BASE}/back/shiny/${id}.png`;
+  }
+  return `${SPRITE_BASE}/back/${id}.png`;
+}
+
+export function getAnimatedBackSpriteUrl(id: number): string {
+  return `${SPRITE_BASE}/versions/generation-v/black-white/animated/back/${id}.gif`;
+}
+
+/** Official high-res artwork — used for menus/cards (crisp, not pixelated). */
+export function getArtworkUrl(id: number): string {
+  return `${SPRITE_BASE}/other/official-artwork/${id}.png`;
+}
+
 async function fetchWithCache(url: string): Promise<unknown> {
   if (apiDataCache.has(url)) {
     return apiDataCache.get(url)!;

@@ -6,9 +6,8 @@ import { getRandomStarters } from '../data/starters';
 import type { Pokemon } from '../types/pokemon';
 import { PokemonSprite } from '../components/pokemon/PokemonSprite';
 import { TypeBadge } from '../components/ui/TypeBadge';
-import { StatsBar } from '../components/pokemon/StatsBar';
 import { Button } from '../components/ui/Button';
-import { HPBar } from '../components/ui/HPBar';
+import { TYPE_COLORS } from '../data/typeChart';
 
 export function StarterScreen() {
   const { addPokemon, setScreen } = useGameStore();
@@ -20,194 +19,136 @@ export function StarterScreen() {
   useEffect(() => {
     const ids = getRandomStarters(3);
     setLoading(true);
-
-    Promise.all(ids.map(id => fetchPokemon(id, 8)))
-      .then(mons => {
+    Promise.all(ids.map((id) => fetchPokemon(id, 8)))
+      .then((mons) => {
         setStarters(mons);
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, []);
 
-  const handleConfirm = async () => {
+  const handleConfirm = () => {
     if (selectedIndex === null) return;
     setConfirming(true);
-
-    const starter = starters[selectedIndex];
-    addPokemon(starter);
-
-    setTimeout(() => {
-      setScreen('map');
-    }, 800);
+    addPokemon(starters[selectedIndex]);
+    setTimeout(() => setScreen('map'), 600);
   };
 
   const selected = selectedIndex !== null ? starters[selectedIndex] : null;
+  const accent = selected ? TYPE_COLORS[selected.types[0]] : '#8b5cf6';
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      {/* Background gradient based on selected type */}
+    <div className="min-h-screen flex flex-col items-center px-4 py-8 relative overflow-hidden">
       <AnimatePresence mode="wait">
         {selected && (
           <motion.div
-            key={selected.types[0]}
+            key={selected.id}
             className="absolute inset-0 pointer-events-none"
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.15 }}
+            animate={{ opacity: 0.18 }}
             exit={{ opacity: 0 }}
-            style={{
-              background: `radial-gradient(ellipse at center, var(--type-color, #7038F8) 0%, transparent 70%)`,
-            }}
+            style={{ background: `radial-gradient(ellipse at 50% 30%, ${accent} 0%, transparent 65%)` }}
           />
         )}
       </AnimatePresence>
 
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-10"
+        className="text-center mb-7 relative z-10"
       >
-        <h1 className="text-4xl font-black text-white mb-2">Choose Your Starter</h1>
-        <p className="text-white/50">Your partner for this adventure</p>
+        <h1 className="text-2xl font-black text-white">Choisis ton starter</h1>
+        <p className="text-white/40 text-sm mt-1">Ton partenaire pour cette aventure</p>
       </motion.div>
 
       {loading ? (
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-4 mt-12">
           <motion.div
-            className="w-16 h-16 border-4 border-violet-500 border-t-transparent rounded-full"
+            className="w-12 h-12 border-[3px] border-violet-500 border-t-transparent rounded-full"
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
           />
-          <p className="text-white/50">Loading Pokémon...</p>
+          <p className="text-white/40 text-sm">Chargement des Pokémon…</p>
         </div>
       ) : (
         <>
-          {/* Starter Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl mb-10">
+          <div className="w-full max-w-md flex flex-col gap-3 relative z-10">
             {starters.map((pokemon, i) => {
               const isSelected = selectedIndex === i;
-
+              const color = TYPE_COLORS[pokemon.types[0]];
               return (
-                <motion.div
+                <motion.button
                   key={pokemon.id}
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.15 }}
-                  whileHover={{ scale: 1.04, y: -8 }}
-                  whileTap={{ scale: 0.97 }}
+                  transition={{ delay: i * 0.08 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => setSelectedIndex(i)}
-                  className={`
-                    relative cursor-pointer rounded-2xl p-6 flex flex-col items-center text-center
-                    transition-all duration-300
-                    ${isSelected
-                      ? 'bg-white/15 border-2 border-white/40 shadow-2xl'
-                      : 'bg-white/5 border border-white/10 hover:border-white/20'
-                    }
-                  `}
+                  className="relative flex items-center gap-3 rounded-2xl p-3 text-left transition-all duration-200"
+                  style={{
+                    background: isSelected
+                      ? `linear-gradient(100deg, ${color}22 0%, rgba(17,18,27,0.9) 70%)`
+                      : 'rgba(255,255,255,0.04)',
+                    border: `1.5px solid ${isSelected ? color : 'rgba(255,255,255,0.08)'}`,
+                    boxShadow: isSelected ? `0 0 24px ${color}33` : undefined,
+                  }}
                 >
-                  {/* Glow */}
-                  {isSelected && (
-                    <motion.div
-                      className="absolute inset-0 rounded-2xl"
-                      style={{ boxShadow: '0 0 40px rgba(139, 92, 246, 0.4)' }}
-                      animate={{ opacity: [0.5, 1, 0.5] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                    />
-                  )}
-
-                  {/* Shiny indicator */}
-                  {pokemon.isShiny && (
-                    <motion.div
-                      className="absolute top-3 right-3 text-yellow-400 text-sm"
-                      animate={{ rotate: [0, 360] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                    >
-                      ✦
-                    </motion.div>
-                  )}
-
-                  {/* Sprite */}
-                  <div className="mb-4">
+                  <div
+                    className="shrink-0 rounded-xl flex items-center justify-center"
+                    style={{ width: 80, height: 80, background: `radial-gradient(circle, ${color}1f, transparent 70%)` }}
+                  >
                     <PokemonSprite
                       id={pokemon.id}
                       name={pokemon.displayName}
                       isShiny={pokemon.isShiny}
-                      size="xl"
-                      animate={isSelected}
+                      artwork
+                      px={76}
+                      animate={false}
                     />
                   </div>
 
-                  {/* Name & ID */}
-                  <p className="text-[10px] text-white/30 font-mono mb-1">
-                    #{String(pokemon.id).padStart(3, '0')}
-                  </p>
-                  <h2 className="text-xl font-black text-white mb-2">{pokemon.displayName}</h2>
-
-                  {/* Types */}
-                  <div className="flex gap-1.5 mb-4">
-                    {pokemon.types.map(t => (
-                      <TypeBadge key={t} type={t} size="md" />
-                    ))}
-                  </div>
-
-                  {/* Stats */}
-                  <div className="w-full">
-                    <StatsBar stats={pokemon.baseStats} />
-                  </div>
-
-                  {/* HP bar */}
-                  <div className="w-full mt-3">
-                    <HPBar current={pokemon.currentHP} max={pokemon.maxHP} showNumbers />
-                  </div>
-
-                  {/* Moves preview */}
-                  <div className="mt-4 w-full">
-                    <p className="text-[10px] text-white/30 uppercase tracking-wider mb-1">Moves</p>
-                    <div className="flex flex-wrap gap-1 justify-center">
-                      {pokemon.moves.map(m => (
-                        <span key={m.id} className="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white/60">
-                          {m.name}
-                        </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-lg font-black text-white truncate">{pokemon.displayName}</h2>
+                      {pokemon.isShiny && <span className="text-yellow-400 text-sm">★</span>}
+                    </div>
+                    <div className="flex gap-1.5 mt-1">
+                      {pokemon.types.map((t) => (
+                        <TypeBadge key={t} type={t} size="sm" />
                       ))}
+                    </div>
+                    <div className="flex gap-3 mt-2 text-[11px] text-white/45">
+                      <span>PV {pokemon.baseStats.hp}</span>
+                      <span>Atq {pokemon.baseStats.atk}</span>
+                      <span>Vit {pokemon.baseStats.speed}</span>
                     </div>
                   </div>
 
                   {isSelected && (
                     <motion.div
-                      className="absolute -top-3 left-1/2 -translate-x-1/2 bg-violet-600 text-white text-xs font-bold px-3 py-1 rounded-full"
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
+                      className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-white text-sm font-bold"
+                      style={{ background: color }}
                     >
-                      ✓ Selected
+                      ✓
                     </motion.div>
                   )}
-                </motion.div>
+                </motion.button>
               );
             })}
           </div>
 
-          {/* Confirm Button */}
-          <AnimatePresence>
-            {selectedIndex !== null && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                className="flex flex-col items-center gap-2"
-              >
-                <p className="text-white/50 text-sm">
-                  {starters[selectedIndex]?.displayName} will be your partner!
-                </p>
-                <Button
-                  size="lg"
-                  onClick={handleConfirm}
-                  disabled={confirming}
-                  className="px-12"
-                >
-                  {confirming ? '✓ Choosing...' : '▶ Choose Starter'}
-                </Button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <div className="w-full max-w-md mt-6 relative z-10">
+            <Button
+              size="lg"
+              fullWidth
+              onClick={handleConfirm}
+              disabled={selectedIndex === null || confirming}
+            >
+              {confirming ? '✓ C\'est parti !' : selected ? `Choisir ${selected.displayName}` : 'Sélectionne un Pokémon'}
+            </Button>
+          </div>
         </>
       )}
     </div>

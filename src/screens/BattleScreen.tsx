@@ -128,40 +128,32 @@ export function BattleScreen() {
   if (playerTeam.length === 0 || enemyTeam.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-white/50">Preparing battle...</p>
+        <p className="text-white/50">Préparation du combat…</p>
       </div>
     );
   }
 
+  const title =
+    currentNode?.type === 'boss' ? '👑 Combat de Boss' :
+    currentNode?.type === 'elite' ? '⚔️ Dresseur d\'élite' :
+    currentNode?.type === 'wild' ? '🌿 Pokémon sauvage' :
+    '👤 Combat de dresseur';
+
   return (
     <motion.div
-      className="min-h-screen p-4 flex flex-col"
+      className="min-h-screen px-4 py-5 flex flex-col items-center"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-xl font-black text-white">
-            {currentNode?.type === 'boss' ? '👑 Boss Battle!' :
-             currentNode?.type === 'elite' ? '⚔️ Elite Trainer!' :
-             currentNode?.type === 'wild' ? '🌿 Wild Battle' :
-             '👤 Trainer Battle'}
-          </h1>
-          <p className="text-white/40 text-xs">
-            {currentNode?.type === 'boss' ? 'Defeat the region boss to advance!' :
-             'Autobattle in progress — watch the action unfold'}
-          </p>
-        </div>
+      <div className="w-full max-w-md mb-3 text-center">
+        <h1 className="text-base font-bold text-white/90 tracking-wide">{title}</h1>
       </div>
 
-      <div className="flex-1">
-        <BattleScene
-          playerTeam={playerTeam}
-          enemyTeam={enemyTeam}
-          onBattleEnd={handleBattleEnd}
-        />
-      </div>
+      <BattleScene
+        playerTeam={playerTeam}
+        enemyTeam={enemyTeam}
+        onBattleEnd={handleBattleEnd}
+      />
     </motion.div>
   );
 }
