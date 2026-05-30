@@ -12,7 +12,6 @@ export function GameOverScreen() {
     gameMode,
     saveRun,
     setScreen,
-    setGameMode,
   } = useGameStore();
 
   const handleSaveAndMenu = () => {
