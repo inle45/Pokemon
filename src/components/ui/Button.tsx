@@ -12,17 +12,20 @@ interface ButtonProps {
 }
 
 const variants = {
-  primary: 'bg-violet-600 hover:bg-violet-500 text-white border border-violet-500/50 shadow-lg shadow-violet-900/30',
-  secondary: 'bg-white/10 hover:bg-white/15 text-white border border-white/20',
-  danger: 'bg-red-600 hover:bg-red-500 text-white border border-red-500/50 shadow-lg shadow-red-900/30',
-  ghost: 'bg-transparent hover:bg-white/5 text-white/70 hover:text-white border border-transparent',
-  success: 'bg-green-600 hover:bg-green-500 text-white border border-green-500/50 shadow-lg shadow-green-900/30',
+  primary:
+    'text-white bg-gradient-to-b from-violet-500 to-violet-700 hover:from-violet-400 hover:to-violet-600 border border-violet-400/40 shadow-lg shadow-violet-900/40',
+  secondary: 'bg-white/8 hover:bg-white/14 text-white border border-white/15',
+  danger:
+    'text-white bg-gradient-to-b from-red-500 to-red-700 hover:from-red-400 hover:to-red-600 border border-red-400/40 shadow-lg shadow-red-900/40',
+  ghost: 'bg-transparent hover:bg-white/8 text-white/70 hover:text-white border border-transparent',
+  success:
+    'text-white bg-gradient-to-b from-green-500 to-green-700 hover:from-green-400 hover:to-green-600 border border-green-400/40 shadow-lg shadow-green-900/40',
 };
 
 const sizes = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-5 py-2.5 text-sm',
-  lg: 'px-7 py-3.5 text-base',
+  sm: 'px-3.5 py-2 text-sm rounded-lg',
+  md: 'px-5 py-3 text-sm rounded-xl',
+  lg: 'px-7 py-4 text-base rounded-2xl',
 };
 
 export function Button({
@@ -41,7 +44,7 @@ export function Button({
       onClick={onClick}
       disabled={disabled}
       className={`
-        rounded-lg font-semibold transition-all duration-150 cursor-pointer
+        font-bold tracking-wide transition-all duration-150 cursor-pointer
         ${variants[variant]}
         ${sizes[size]}
         ${fullWidth ? 'w-full' : ''}

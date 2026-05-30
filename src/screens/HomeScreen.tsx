@@ -2,199 +2,139 @@ import { motion } from 'framer-motion';
 import { useGameStore } from '../stores/gameStore';
 import { Button } from '../components/ui/Button';
 import type { GameMode } from '../types/game';
-import { formatTime } from '../utils/helpers';
 
-const GAME_MODES: { id: GameMode; name: string; desc: string; color: string; icon: string }[] = [
-  {
-    id: 'normal',
-    name: 'Normal',
-    desc: 'Classic roguelike experience. Full healing available.',
-    color: 'from-blue-600 to-violet-600',
-    icon: '⚔️',
-  },
-  {
-    id: 'nuzlocke',
-    name: 'Nuzlocke',
-    desc: 'Fainted Pokémon are permanently lost. Catch only one per area.',
-    color: 'from-red-700 to-orange-700',
-    icon: '💀',
-  },
-  {
-    id: 'challenge',
-    name: 'Challenge',
-    desc: 'Enemies are 5 levels higher. Fewer heal nodes.',
-    color: 'from-yellow-700 to-amber-700',
-    icon: '🔥',
-  },
-];
-
-const TYPE_COLORS = [
-  '#F08030', '#6890F0', '#78C850', '#F8D030', '#A040A0',
-  '#F85888', '#7038F8', '#EE99AC', '#B8D8D8', '#98D8D8',
+const GAME_MODES: { id: GameMode; name: string; desc: string; icon: string; accent: string }[] = [
+  { id: 'normal', name: 'Normal', desc: 'Expérience roguelike classique. Soins disponibles.', icon: '⚔️', accent: '#8b5cf6' },
+  { id: 'nuzlocke', name: 'Nuzlocke', desc: 'Les Pokémon K.O. sont perdus à jamais.', icon: '💀', accent: '#ef4444' },
+  { id: 'challenge', name: 'Challenge', desc: 'Ennemis +5 niveaux. Moins de soins.', icon: '🔥', accent: '#f59e0b' },
 ];
 
 export function HomeScreen() {
   const { gameMode, setGameMode, runHistory, resetRun } = useGameStore();
 
-  const startRun = () => {
-    resetRun();
-  };
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden p-6">
-      {/* Animated background particles */}
-      {TYPE_COLORS.map((color, i) => (
-        <motion.div
-          key={i}
-          className="absolute rounded-full opacity-20 pointer-events-none"
-          style={{
-            background: `radial-gradient(circle, ${color} 0%, transparent 70%)`,
-            width: 200 + Math.random() * 300,
-            height: 200 + Math.random() * 300,
-            left: `${(i / TYPE_COLORS.length) * 100}%`,
-            top: `${Math.random() * 100}%`,
-          }}
-          animate={{
-            x: [0, Math.random() * 80 - 40, 0],
-            y: [0, Math.random() * 80 - 40, 0],
-            scale: [1, 1.2, 1],
-          }}
-          transition={{
-            duration: 6 + Math.random() * 8,
-            repeat: Infinity,
-            ease: 'easeInOut',
-            delay: Math.random() * 3,
-          }}
-        />
-      ))}
+    <div className="min-h-screen flex flex-col items-center px-4 py-10 relative overflow-hidden">
+      {/* Soft background glow */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(139,92,246,0.18) 0%, transparent 55%)' }}
+      />
 
       {/* Logo */}
       <motion.div
-        className="text-center mb-12"
-        initial={{ opacity: 0, y: -40 }}
+        className="text-center mb-8 relative z-10"
+        initial={{ opacity: 0, y: -24 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: 'easeOut' }}
+        transition={{ duration: 0.6 }}
       >
         <motion.div
-          className="text-8xl mb-4"
-          animate={{ rotate: [0, 5, -5, 0] }}
+          className="text-6xl mb-2"
+          animate={{ rotate: [0, 6, -6, 0] }}
           transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
         >
           ⚡
         </motion.div>
-        <h1 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-pink-400 to-yellow-400 mb-3">
+        <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-pink-400 to-yellow-400">
           PokéRogue
         </h1>
-        <p className="text-white/50 text-lg">Pokémon Roguelike Autobattler</p>
-        <p className="text-white/30 text-sm mt-1">All generations · All Pokémon · Endless runs</p>
+        <p className="text-white/40 text-sm mt-1">Roguelike Pokémon · Toutes générations</p>
       </motion.div>
 
-      {/* Game Mode Selection */}
+      {/* Mode selection */}
       <motion.div
-        className="w-full max-w-2xl mb-10"
-        initial={{ opacity: 0, y: 30 }}
+        className="w-full max-w-md relative z-10"
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.7 }}
+        transition={{ delay: 0.15 }}
       >
-        <h2 className="text-center text-sm font-bold text-white/50 uppercase tracking-widest mb-4">
-          Choose Mode
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {GAME_MODES.map(mode => (
-            <motion.button
-              key={mode.id}
-              onClick={() => setGameMode(mode.id)}
-              whileHover={{ scale: 1.03, y: -4 }}
-              whileTap={{ scale: 0.97 }}
-              className={`
-                relative overflow-hidden rounded-xl p-4 text-left transition-all cursor-pointer
-                ${gameMode === mode.id
-                  ? `bg-gradient-to-br ${mode.color} border-2 border-white/30 shadow-lg`
-                  : 'bg-white/5 border border-white/10 hover:border-white/20'
-                }
-              `}
-            >
-              <span className="text-2xl block mb-2">{mode.icon}</span>
-              <p className="font-bold text-white">{mode.name}</p>
-              <p className="text-xs text-white/60 mt-1">{mode.desc}</p>
-              {gameMode === mode.id && (
-                <motion.div
-                  className="absolute top-2 right-2 text-white text-lg"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
+        <h2 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-3 text-center">Mode de jeu</h2>
+        <div className="flex flex-col gap-2.5">
+          {GAME_MODES.map((mode) => {
+            const active = gameMode === mode.id;
+            return (
+              <motion.button
+                key={mode.id}
+                onClick={() => setGameMode(mode.id)}
+                whileTap={{ scale: 0.98 }}
+                className="relative flex items-center gap-3 rounded-2xl px-4 py-3 text-left transition-all duration-200"
+                style={{
+                  background: active ? `linear-gradient(100deg, ${mode.accent}22, rgba(17,18,27,0.9) 70%)` : 'rgba(255,255,255,0.04)',
+                  border: `1.5px solid ${active ? mode.accent : 'rgba(255,255,255,0.08)'}`,
+                  boxShadow: active ? `0 0 22px ${mode.accent}33` : undefined,
+                }}
+              >
+                <span
+                  className="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-xl"
+                  style={{ background: `${mode.accent}1f` }}
                 >
-                  ✓
-                </motion.div>
-              )}
-            </motion.button>
-          ))}
+                  {mode.icon}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-white">{mode.name}</p>
+                  <p className="text-xs text-white/45 mt-0.5">{mode.desc}</p>
+                </div>
+                {active && (
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-white text-sm font-bold"
+                    style={{ background: mode.accent }}
+                  >
+                    ✓
+                  </motion.span>
+                )}
+              </motion.button>
+            );
+          })}
         </div>
       </motion.div>
 
-      {/* Start Button */}
+      {/* Start button */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
+        className="w-full max-w-md mt-6 relative z-10"
+        initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.4 }}
+        transition={{ delay: 0.3 }}
       >
-        <Button size="lg" onClick={startRun} className="px-16 py-5 text-xl font-black">
-          ▶ Start Adventure
+        <Button size="lg" fullWidth onClick={() => resetRun()}>
+          ▶ Commencer l'aventure
         </Button>
       </motion.div>
 
-      {/* Run History */}
+      {/* Run history */}
       {runHistory.length > 0 && (
         <motion.div
-          className="w-full max-w-2xl mt-10"
+          className="w-full max-w-md mt-8 relative z-10"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
+          transition={{ delay: 0.45 }}
         >
-          <h2 className="text-sm font-bold text-white/40 uppercase tracking-widest mb-3 text-center">
-            Recent Runs
-          </h2>
+          <h2 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-3">Parties récentes</h2>
           <div className="flex flex-col gap-2">
-            {runHistory.slice(0, 4).map(run => (
+            {runHistory.slice(0, 5).map((run) => (
               <div
                 key={run.id}
-                className="flex items-center justify-between bg-white/5 border border-white/10 rounded-lg px-4 py-3"
+                className={`flex items-center justify-between rounded-xl px-4 py-2.5 border ${
+                  run.result === 'win' ? 'border-yellow-500/25 bg-yellow-500/5' : 'border-white/8 bg-white/4'
+                }`}
               >
-                <div className="flex items-center gap-3">
-                  <span className={run.result === 'win' ? 'text-green-400' : 'text-red-400'}>
-                    {run.result === 'win' ? '🏆' : '💀'}
-                  </span>
+                <div className="flex items-center gap-2.5">
+                  <span>{run.result === 'win' ? '🏆' : '💀'}</span>
                   <div>
-                    <p className="text-xs text-white font-semibold">
-                      {run.mode.charAt(0).toUpperCase() + run.mode.slice(1)} Mode
-                    </p>
-                    <p className="text-[10px] text-white/40">
-                      {new Date(run.date).toLocaleDateString()} · {run.regionsCleared}/5 regions
-                    </p>
+                    <p className="text-xs text-white font-semibold capitalize">{run.mode}</p>
+                    <p className="text-[10px] text-white/35">{run.regionsCleared}/5 régions · {run.stats.battlesWon} victoires</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-white/60">
-                    {run.finalTeam.map(p => p.name).join(', ')}
-                  </p>
-                  <p className="text-[10px] text-white/30">
-                    {formatTime(run.stats.endTime! - run.stats.startTime)}
-                  </p>
-                </div>
+                <span className={`text-[10px] font-bold ${run.result === 'win' ? 'text-yellow-400' : 'text-white/25'}`}>
+                  {run.result === 'win' ? 'VICTOIRE' : 'DÉFAITE'}
+                </span>
               </div>
             ))}
           </div>
         </motion.div>
       )}
 
-      {/* Bottom credits */}
-      <motion.p
-        className="absolute bottom-4 text-white/20 text-xs"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1 }}
-      >
-        Data from PokeAPI · All Pokémon Gen 1-9
-      </motion.p>
+      <p className="text-white/20 text-[10px] mt-8 relative z-10">Données : PokeAPI · Pokémon Gen 1-9</p>
     </div>
   );
 }
