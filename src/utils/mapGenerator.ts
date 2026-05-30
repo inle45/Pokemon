@@ -139,28 +139,34 @@ export function getAccessibleNodes(map: GameMap, completedNodeIds: Set<string>):
   for (const node of map.nodes) {
     if (completedNodeIds.has(node.id)) continue;
 
-    // First layer of first region always accessible if not completed
-    if (node.region === 0 && node.layer === 0 && !completedNodeIds.has(node.id)) {
+    // Once any node in this (region, layer) is completed, the rest of the layer is locked.
+    // This enforces the Slay-the-Spire "commit to a path" rule.
+    const layerAlreadyCommitted = map.nodes.some(
+      n => n.region === node.region && n.layer === node.layer && completedNodeIds.has(n.id)
+    );
+    if (layerAlreadyCommitted) continue;
+
+    // First layer of first region is always available at the start.
+    if (node.region === 0 && node.layer === 0) {
       accessible.push(node.id);
       continue;
     }
 
-    // A node is accessible if any of its predecessors are completed
-    const predecessors = map.nodes.filter(n => n.connections.includes(node.id));
-    const anyPredecessorCompleted = predecessors.some(p => completedNodeIds.has(p.id));
-
-    if (anyPredecessorCompleted) {
-      accessible.push(node.id);
-    }
-
-    // First layer of subsequent regions is accessible if previous region boss is completed
+    // First layer of subsequent regions unlocks when the previous region's boss is cleared.
     if (node.layer === 0 && node.region > 0) {
-      const prevRegionBoss = map.nodes.find(
-        n => n.region === node.region - 1 && n.layer === 6 && n.type === 'boss'
+      const prevBoss = map.nodes.find(
+        n => n.region === node.region - 1 && n.type === 'boss'
       );
-      if (prevRegionBoss && completedNodeIds.has(prevRegionBoss.id)) {
+      if (prevBoss && completedNodeIds.has(prevBoss.id)) {
         accessible.push(node.id);
       }
+      continue;
+    }
+
+    // All other nodes: accessible only if a direct predecessor is completed.
+    const predecessors = map.nodes.filter(n => n.connections.includes(node.id));
+    if (predecessors.some(p => completedNodeIds.has(p.id))) {
+      accessible.push(node.id);
     }
   }
 

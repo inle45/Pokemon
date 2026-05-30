@@ -267,14 +267,48 @@ export async function fetchMultiplePokemon(ids: number[], level: number): Promis
   return results;
 }
 
-// Get a random Pokémon from a generation range
-export function getRandomPokemonIds(count: number, minId = 1, maxId = 905): number[] {
+// Legendary/mythical Pokémon IDs — excluded from random wild encounters.
+const LEGENDARY_IDS = new Set([
+  // Gen 1
+  144, 145, 146, 150, 151,
+  // Gen 2
+  243, 244, 245, 249, 250, 251,
+  // Gen 3
+  377, 378, 379, 380, 381, 382, 383, 384, 385, 386,
+  // Gen 4
+  480, 481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493,
+  // Gen 5
+  638, 639, 640, 641, 642, 643, 644, 645, 646, 647, 648, 649,
+  // Gen 6
+  716, 717, 718, 719, 720, 721,
+  // Gen 7
+  785, 786, 787, 788, 789, 790, 791, 792, 793, 794, 795, 796, 797, 798,
+  799, 800, 801, 802, 803, 804, 805, 806, 807, 808, 809,
+  // Gen 8
+  888, 889, 890, 891, 892, 893, 894, 895, 896, 897, 898,
+  // Gen 9
+  1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010,
+]);
+
+// Pokémon ID pool by region (0-4) — widens as the player progresses.
+const REGION_POOLS: [number, number][] = [
+  [1, 151],   // Region 0 — Kanto only
+  [1, 251],   // Region 1 — Kanto + Johto
+  [1, 386],   // Region 2 — + Hoenn
+  [1, 493],   // Region 3 — + Sinnoh
+  [1, 905],   // Region 4 — all gens
+];
+
+export function getRandomPokemonIds(count: number, minId = 1, maxId = 905, region = 4): number[] {
+  const [poolMin, poolMax] = REGION_POOLS[Math.min(region, 4)] ?? [minId, maxId];
   const ids: number[] = [];
   const used = new Set<number>();
+  let tries = 0;
 
-  while (ids.length < count) {
-    const id = Math.floor(Math.random() * (maxId - minId + 1)) + minId;
-    if (!used.has(id)) {
+  while (ids.length < count && tries < 2000) {
+    tries++;
+    const id = Math.floor(Math.random() * (poolMax - poolMin + 1)) + poolMin;
+    if (!used.has(id) && !LEGENDARY_IDS.has(id)) {
       used.add(id);
       ids.push(id);
     }

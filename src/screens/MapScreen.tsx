@@ -4,22 +4,13 @@ import { useGameStore } from '../stores/gameStore';
 import { Button } from '../components/ui/Button';
 import { PokemonSprite } from '../components/pokemon/PokemonSprite';
 import { getNodeColor, getLevelRange } from '../utils/mapGenerator';
+import { NodeIcon } from '../components/map/NodeIcon';
 import { fetchMultiplePokemon, getRandomPokemonIds } from '../services/pokeapi';
 import { getWeightedRandomItem } from '../data/items';
 import { getRandomEventMessage } from '../utils/helpers';
 import type { NodeType } from '../types/game';
 import type { Pokemon } from '../types/pokemon';
 
-const NODE_ICON: Record<NodeType, string> = {
-  wild: '🌿',
-  trainer: '🧢',
-  elite: '⚔️',
-  heal: '✚',
-  item: '🎁',
-  shop: '🛒',
-  event: '❓',
-  boss: '👑',
-};
 
 const NODE_FR: Record<NodeType, string> = {
   wild: 'Sauvage',
@@ -169,7 +160,7 @@ export function MapScreen() {
         break;
       }
       case 'wild': {
-        const [wildId] = getRandomPokemonIds(1, 1, 905);
+        const [wildId] = getRandomPokemonIds(1, 1, 905, node.region);
         const enemies = await fetchMultiplePokemon([wildId], adjustedLevel);
         setEnemyTeam(enemies);
         setPendingReward({ type: 'pokemon', choices: enemies as Pokemon[] });
@@ -178,7 +169,7 @@ export function MapScreen() {
         break;
       }
       case 'trainer': {
-        const enemyIds = getRandomPokemonIds(2 + Math.floor(Math.random() * 2), 1, 905);
+        const enemyIds = getRandomPokemonIds(2 + Math.floor(Math.random() * 2), 1, 905, node.region);
         const enemies = await fetchMultiplePokemon(enemyIds, adjustedLevel);
         setEnemyTeam(enemies);
         setPendingReward({ type: 'item', items: [getWeightedRandomItem()] });
@@ -187,10 +178,10 @@ export function MapScreen() {
         break;
       }
       case 'elite': {
-        const enemyIds = getRandomPokemonIds(3 + Math.floor(Math.random() * 2), 1, 905);
+        const enemyIds = getRandomPokemonIds(3 + Math.floor(Math.random() * 2), 1, 905, node.region);
         const enemies = await fetchMultiplePokemon(enemyIds, adjustedLevel + 3);
         setEnemyTeam(enemies);
-        const rewardPokemon = await fetchMultiplePokemon(getRandomPokemonIds(1, 1, 905), adjustedLevel + 2);
+        const rewardPokemon = await fetchMultiplePokemon(getRandomPokemonIds(1, 1, 905, node.region), adjustedLevel + 2);
         setPendingReward({ type: 'pokemon', choices: rewardPokemon, items: [getWeightedRandomItem()] });
         setLoadingNode(null);
         setScreen('battle');
@@ -198,9 +189,9 @@ export function MapScreen() {
       }
       case 'boss': {
         const bossLevel = adjustedLevel + 5;
-        const enemies = await fetchMultiplePokemon(getRandomPokemonIds(4 + Math.floor(Math.random() * 3), 1, 905), bossLevel);
+        const enemies = await fetchMultiplePokemon(getRandomPokemonIds(4 + Math.floor(Math.random() * 3), 1, 905, node.region), bossLevel);
         setEnemyTeam(enemies);
-        const bonusPokemon = await fetchMultiplePokemon(getRandomPokemonIds(3, 1, 905), bossLevel - 5);
+        const bonusPokemon = await fetchMultiplePokemon(getRandomPokemonIds(3, 1, 905, node.region), bossLevel - 5);
         setPendingReward({ type: 'pokemon', choices: bonusPokemon, items: [getWeightedRandomItem()] });
         setLoadingNode(null);
         setScreen('battle');
@@ -320,9 +311,11 @@ export function MapScreen() {
                               transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
                             />
                           ) : isCompleted ? (
-                            <span className="text-white/40 text-lg">✓</span>
+                            <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
                           ) : (
-                            <span style={{ fontSize: isBoss ? 28 : 20 }}>{NODE_ICON[node.type]}</span>
+                            <NodeIcon type={node.type} color={dim ? 'rgba(255,255,255,0.3)' : color} size={isBoss ? 30 : 22} />
                           )}
 
                           {clickable && (
