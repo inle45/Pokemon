@@ -8,6 +8,7 @@ import { RewardScreen } from './screens/RewardScreen';
 import { EventScreen } from './screens/EventScreen';
 import { GameOverScreen } from './screens/GameOverScreen';
 import { VictoryScreen } from './screens/VictoryScreen';
+import { ShopScreen } from './screens/ShopScreen';
 
 function ScreenTransition({ children, screenKey }: { children: React.ReactNode; screenKey: string }) {
   return (
@@ -62,6 +63,12 @@ export default function App() {
         {currentScreen === 'reward' && (
           <ScreenTransition screenKey="reward">
             <RewardScreen />
+          </ScreenTransition>
+        )}
+
+        {currentScreen === 'shop' && (
+          <ScreenTransition screenKey="shop">
+            <ShopScreen />
           </ScreenTransition>
         )}
 

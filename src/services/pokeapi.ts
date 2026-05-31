@@ -249,6 +249,9 @@ export function getEffectiveStat(pokemon: Pokemon, stat: 'atk' | 'def' | 'spAtk'
   if (pokemon.heldItem === 'assault-vest' && stat === 'spDef') {
     value = Math.floor(value * 1.5);
   }
+  if (pokemon.heldItem === 'choice-scarf' && stat === 'speed') {
+    value = Math.floor(value * 1.5);
+  }
 
   return Math.max(1, value);
 }

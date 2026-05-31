@@ -1,4 +1,4 @@
-import type { Item } from '../types/game';
+import type { Item, ShopItem } from '../types/game';
 
 export const ITEMS_DATABASE: Item[] = [
   // Consumables
@@ -187,10 +187,74 @@ export const ITEMS_DATABASE: Item[] = [
   {
     id: 'eviolite',
     name: 'Eviolite',
-    description: 'Not fully evolved: Def and Sp. Def are 1.5x.',
+    description: 'Not fully evolved: Déf et Déf Spé ×1.5.',
     category: 'held',
     effect: { type: 'held', heldType: 'eviolite' },
     icon: '💎',
+    rarity: 'epic',
+  },
+  // New held items
+  {
+    id: 'choice-scarf',
+    name: 'Choice Scarf',
+    description: 'Vitesse ×1.5 — mais limité à la première capacité.',
+    category: 'held',
+    effect: { type: 'held', heldType: 'choice-scarf' },
+    icon: '🧣',
+    rarity: 'rare',
+  },
+  {
+    id: 'choice-specs',
+    name: 'Choice Specs',
+    description: 'Att. Spé ×1.5 — mais limité aux capacités spéciales.',
+    category: 'held',
+    effect: { type: 'held', heldType: 'choice-specs' },
+    icon: '🥽',
+    rarity: 'rare',
+  },
+  {
+    id: 'expert-belt',
+    name: 'Expert Belt',
+    description: 'Capacités super efficaces infligent ×1.2 dégâts.',
+    category: 'held',
+    effect: { type: 'held', heldType: 'expert-belt' },
+    icon: '🥊',
+    rarity: 'uncommon',
+  },
+  {
+    id: 'shell-bell',
+    name: 'Shell Bell',
+    description: 'Restaure 1/8 des dégâts infligés en PV chaque tour.',
+    category: 'held',
+    effect: { type: 'held', heldType: 'shell-bell' },
+    icon: '🔔',
+    rarity: 'uncommon',
+  },
+  {
+    id: 'scope-lens',
+    name: 'Scope Lens',
+    description: 'Augmente le taux de coups critiques.',
+    category: 'held',
+    effect: { type: 'held', heldType: 'scope-lens' },
+    icon: '🔭',
+    rarity: 'uncommon',
+  },
+  {
+    id: 'sitrus-berry',
+    name: 'Sitrus Berry',
+    description: 'Restaure 25% des PV max quand les PV tombent sous 50%.',
+    category: 'held',
+    effect: { type: 'held', heldType: 'sitrus-berry' },
+    icon: '🍋',
+    rarity: 'common',
+  },
+  {
+    id: 'weakness-policy',
+    name: 'Weakness Policy',
+    description: 'Si touché par une attaque super efficace: Att. et Att. Spé +2.',
+    category: 'held',
+    effect: { type: 'held', heldType: 'weakness-policy' },
+    icon: '📜',
     rarity: 'epic',
   },
 ];
@@ -224,4 +288,43 @@ export function getWeightedRandomItem(): Item {
     }
   }
   return getRandomItem('common');
+}
+
+const RARITY_PRICES: Record<string, number> = {
+  common: 80,
+  uncommon: 160,
+  rare: 320,
+  epic: 560,
+};
+
+export function getItemPrice(item: Item): number {
+  return RARITY_PRICES[item.rarity] ?? 100;
+}
+
+// Generate shop stock: 5 items weighted by rarity, no duplicates
+export function generateShopStock(count = 5): ShopItem[] {
+  const weights = { common: 40, uncommon: 35, rare: 20, epic: 5 };
+  const total = Object.values(weights).reduce((a, b) => a + b, 0);
+  const usedIds = new Set<string>();
+  const result: ShopItem[] = [];
+
+  let tries = 0;
+  while (result.length < count && tries < 200) {
+    tries++;
+    let roll = Math.random() * total;
+    let rarity: 'common' | 'uncommon' | 'rare' | 'epic' = 'common';
+    for (const [r, w] of Object.entries(weights)) {
+      roll -= w;
+      if (roll <= 0) { rarity = r as typeof rarity; break; }
+    }
+
+    const pool = ITEMS_DATABASE.filter(i => i.rarity === rarity && !usedIds.has(i.id));
+    if (pool.length === 0) continue;
+
+    const item = pool[Math.floor(Math.random() * pool.length)];
+    usedIds.add(item.id);
+    result.push({ item, price: getItemPrice(item), sold: false });
+  }
+
+  return result;
 }

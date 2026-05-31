@@ -71,10 +71,11 @@ function calcDamage(
   const lifeOrb = attacker.heldItem === 'life-orb' ? 1.3 : 1;
   const choiceBand = (attacker.heldItem === 'choice-band' && move.category === 'physical') ? 1.5 : 1;
   const choiceSpecs = (attacker.heldItem === 'choice-specs' && move.category === 'special') ? 1.5 : 1;
+  const expertBelt = (attacker.heldItem === 'expert-belt' && effectiveness > 1) ? 1.2 : 1;
 
   const baseDamage = Math.floor(
     (((2 * attacker.level / 5 + 2) * move.power * atkStat / defStat) / 50 + 2)
-    * stab * effectiveness * critMultiplier * weatherMod * lifeOrb * choiceBand * choiceSpecs
+    * stab * effectiveness * critMultiplier * weatherMod * lifeOrb * choiceBand * choiceSpecs * expertBelt
   );
 
   const randomFactor = (Math.floor(Math.random() * 16) + 85) / 100;
@@ -248,6 +249,26 @@ function processTurnEndStatus(
   playerHP: number[],
   enemyHP: number[],
 ): boolean {
+  // Sitrus Berry: heal 25% HP when below 50%
+  if (pokemon.heldItem === 'sitrus-berry' && pokemon.currentHP <= pokemon.maxHP / 2) {
+    pokemon.heldItem = null; // consumed
+    const heal = Math.max(1, Math.floor(pokemon.maxHP / 4));
+    pokemon.currentHP = Math.min(pokemon.maxHP, pokemon.currentHP + heal);
+    if (side === 'player') playerHP[index] = pokemon.currentHP;
+    else enemyHP[index] = pokemon.currentHP;
+    events.push({
+      type: 'heal',
+      message: `${pokemon.displayName} ate its Sitrus Berry and restored ${heal} HP!`,
+      attackerSide: side,
+      attackerIndex: index,
+      heal,
+      newHP: pokemon.currentHP,
+      maxHP: pokemon.maxHP,
+      playerTeamHP: [...playerHP],
+      enemyTeamHP: [...enemyHP],
+    });
+  }
+
   // Leftovers healing (even without status)
   if (pokemon.heldItem === 'leftovers') {
     const heal = Math.max(1, Math.floor(pokemon.maxHP / 16));
@@ -496,7 +517,8 @@ export function simulateBattle(
       return false;
     }
 
-    const isCritical = Math.random() < 1 / 16;
+    const critRate = attacker.heldItem === 'scope-lens' ? 1 / 8 : 1 / 16;
+    const isCritical = Math.random() < critRate;
     const { damage: baseDamage, effectiveness } = calcDamage(attacker, defender, move, weather, isCritical);
 
     let attackMsg = `${attacker.displayName} used ${move.name}`;
@@ -618,6 +640,34 @@ export function simulateBattle(
         playerTeamHP: [...playerHP],
         enemyTeamHP: [...enemyHP],
       });
+    }
+
+    // Shell Bell: attacker heals 1/8 of damage dealt
+    if (attacker.heldItem === 'shell-bell' && totalDamageDealt > 0) {
+      const heal = Math.max(1, Math.floor(totalDamageDealt / 8));
+      const actual = Math.min(heal, attacker.maxHP - attacker.currentHP);
+      if (actual > 0) {
+        attacker.currentHP = Math.min(attacker.maxHP, attacker.currentHP + heal);
+        if (attackerSide === 'player') playerHP[attackerIdx] = attacker.currentHP;
+        else enemyHP[attackerIdx] = attacker.currentHP;
+        events.push({
+          type: 'heal',
+          message: `${attacker.displayName} restored ${actual} HP via Shell Bell!`,
+          attackerSide,
+          attackerIndex: attackerIdx,
+          heal: actual,
+          newHP: attacker.currentHP,
+          maxHP: attacker.maxHP,
+          playerTeamHP: [...playerHP],
+          enemyTeamHP: [...enemyHP],
+        });
+      }
+    }
+
+    // Weakness Policy: +2 Atk/SpAtk when hit by super-effective move
+    if (defender.heldItem === 'weakness-policy' && effectiveness > 1 && defender.currentHP > 0) {
+      defender.heldItem = null; // consumed
+      applyStatChanges(defender, defenderSide, defenderIdx, { atk: 2, spAtk: 2 }, 'Weakness Policy', events, playerHP, enemyHP);
     }
 
     // Rocky Helmet

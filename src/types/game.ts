@@ -70,6 +70,12 @@ export interface ItemEffect {
   heldType?: string;
 }
 
+export interface ShopItem {
+  item: Item;
+  price: number;
+  sold: boolean;
+}
+
 export interface RunStats {
   battlesWon: number;
   battlesLost: number;

@@ -6,7 +6,7 @@ import { PokemonSprite } from '../components/pokemon/PokemonSprite';
 import { getNodeColor, getLevelRange } from '../utils/mapGenerator';
 import { NodeIcon } from '../components/map/NodeIcon';
 import { fetchMultiplePokemon, getRandomPokemonIds } from '../services/pokeapi';
-import { getWeightedRandomItem } from '../data/items';
+import { getWeightedRandomItem, generateShopStock } from '../data/items';
 import { getRandomEventMessage } from '../utils/helpers';
 import type { NodeType } from '../types/game';
 import type { Pokemon } from '../types/pokemon';
@@ -39,6 +39,7 @@ export function MapScreen() {
     healTeam,
     setPendingReward,
     setPendingEvent,
+    setPendingShop,
     coins,
     runStats,
     gameMode,
@@ -132,10 +133,10 @@ export function MapScreen() {
         break;
       }
       case 'shop': {
-        addItem(getWeightedRandomItem());
-        addItem(getWeightedRandomItem());
+        setPendingShop(generateShopStock(5));
         completeNode(nodeId);
         setLoadingNode(null);
+        setScreen('shop');
         break;
       }
       case 'event': {
@@ -172,7 +173,8 @@ export function MapScreen() {
         const enemyIds = getRandomPokemonIds(2 + Math.floor(Math.random() * 2), 1, 905, node.region);
         const enemies = await fetchMultiplePokemon(enemyIds, adjustedLevel);
         setEnemyTeam(enemies);
-        setPendingReward({ type: 'item', items: [getWeightedRandomItem()] });
+        const trainerCoins = 60 + Math.floor(Math.random() * 80);
+        setPendingReward({ type: 'item', items: [getWeightedRandomItem()], coins: trainerCoins });
         setLoadingNode(null);
         setScreen('battle');
         break;
@@ -182,7 +184,8 @@ export function MapScreen() {
         const enemies = await fetchMultiplePokemon(enemyIds, adjustedLevel + 3);
         setEnemyTeam(enemies);
         const rewardPokemon = await fetchMultiplePokemon(getRandomPokemonIds(1, 1, 905, node.region), adjustedLevel + 2);
-        setPendingReward({ type: 'pokemon', choices: rewardPokemon, items: [getWeightedRandomItem()] });
+        const eliteCoins = 140 + Math.floor(Math.random() * 100);
+        setPendingReward({ type: 'pokemon', choices: rewardPokemon, items: [getWeightedRandomItem()], coins: eliteCoins });
         setLoadingNode(null);
         setScreen('battle');
         break;
@@ -192,7 +195,8 @@ export function MapScreen() {
         const enemies = await fetchMultiplePokemon(getRandomPokemonIds(4 + Math.floor(Math.random() * 3), 1, 905, node.region), bossLevel);
         setEnemyTeam(enemies);
         const bonusPokemon = await fetchMultiplePokemon(getRandomPokemonIds(3, 1, 905, node.region), bossLevel - 5);
-        setPendingReward({ type: 'pokemon', choices: bonusPokemon, items: [getWeightedRandomItem()] });
+        const bossCoins = 280 + Math.floor(Math.random() * 200);
+        setPendingReward({ type: 'pokemon', choices: bonusPokemon, items: [getWeightedRandomItem()], coins: bossCoins });
         setLoadingNode(null);
         setScreen('battle');
         break;

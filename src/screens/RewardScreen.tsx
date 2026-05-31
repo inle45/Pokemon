@@ -76,6 +76,7 @@ export function RewardScreen() {
   };
 
   const handleContinue = () => {
+    if (pendingReward?.coins) addCoins(pendingReward.coins);
     setPendingReward(null);
     setScreen('map');
   };
@@ -172,11 +173,16 @@ export function RewardScreen() {
           animate={{ opacity: 1, y: 0 }}
         >
           <h1 className="text-4xl font-black text-white mb-2">
-            {lastBattleResult === 'win' ? '🏆 Victory!' : '🎁 Reward'}
+            {lastBattleResult === 'win' ? '🏆 Victoire !' : '🎁 Récompense'}
           </h1>
           <p className="text-white/50">
-            {currentNode?.type === 'boss' ? 'Region boss defeated!' : 'Choose your reward!'}
+            {currentNode?.type === 'boss' ? 'Boss de région vaincu !' : 'Choisis ta récompense !'}
           </p>
+          {pendingReward?.coins ? (
+            <div className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 text-sm font-bold">
+              💰 +{pendingReward.coins} pièces
+            </div>
+          ) : null}
         </motion.div>
 
         {!rewardTaken ? (

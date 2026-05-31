@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Pokemon } from '../types/pokemon';
-import type { Screen, GameMode, MapNode, GameMap, Item, RunStats, RunHistory } from '../types/game';
+import type { Screen, GameMode, MapNode, GameMap, Item, RunStats, RunHistory, ShopItem } from '../types/game';
 import { generateMap, getAccessibleNodes } from '../utils/mapGenerator';
 import { levelUp, tryEvolve } from '../services/pokeapi';
 
@@ -64,6 +64,10 @@ interface GameStore {
   // Pending event
   pendingEvent: { message: string; effect: 'good' | 'bad' | 'neutral' } | null;
   setPendingEvent: (event: GameStore['pendingEvent']) => void;
+
+  // Shop
+  pendingShop: ShopItem[] | null;
+  setPendingShop: (items: ShopItem[] | null) => void;
 
   // XP share toggle
   xpShareActive: boolean;
@@ -242,6 +246,10 @@ export const useGameStore = create<GameStore>()(
             set({ playerTeam: team });
             return;
           }
+          case 'held': {
+            target.heldItem = item.effect.heldType ?? null;
+            break;
+          }
         }
 
         get().removeItem(itemId);
@@ -286,6 +294,9 @@ export const useGameStore = create<GameStore>()(
       pendingEvent: null,
       setPendingEvent: (event) => set({ pendingEvent: event }),
 
+      pendingShop: null,
+      setPendingShop: (items) => set({ pendingShop: items }),
+
       xpShareActive: false,
       setXpShare: (v) => set({ xpShareActive: v }),
 
@@ -324,11 +335,12 @@ export const useGameStore = create<GameStore>()(
           currentRegion: 0,
           currentLayer: 0,
           items: [],
-          coins: 100,
+          coins: 300,
           runStats: defaultRunStats(gameMode),
           enemyTeam: [],
           pendingReward: null,
           pendingEvent: null,
+          pendingShop: null,
           xpShareActive: false,
           pendingEvolution: null,
           lastBattleResult: null,
