@@ -9,6 +9,7 @@ export type Screen =
   | 'starter'
   | 'map'
   | 'battle'
+  | 'evolution'
   | 'reward'
   | 'shop'
   | 'team'

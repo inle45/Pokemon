@@ -18,7 +18,7 @@ export function BattleScreen() {
     updateStats,
     runStats,
     xpShareActive,
-    setPendingEvolution,
+    addPendingEvolution,
     setLastBattleResult,
   } = useGameStore();
 
@@ -64,7 +64,7 @@ export function BattleScreen() {
         );
       }, 0);
 
-      let evolutionPending: { pokemon: typeof playerTeam[0]; evolvesTo: typeof playerTeam[0] } | null = null;
+      const evolutions: { pokemon: typeof playerTeam[0]; evolvesTo: typeof playerTeam[0] }[] = [];
 
       for (let i = 0; i < updatedTeam.length; i++) {
         const pokemon = updatedTeam[i];
@@ -74,26 +74,19 @@ export function BattleScreen() {
 
         pokemon.xp += xpGain;
 
-        // Level up check
+        // Level up loop — collect all evolutions
         while (pokemon.xp >= pokemon.xpToNext) {
           pokemon.xp -= pokemon.xpToNext;
-          updatedTeam[i] = levelUp(pokemon);
-
-          // Check evolution (only do first evolution we find)
-          if (!evolutionPending) {
-            const evolved = await tryEvolve(updatedTeam[i]);
-            if (evolved) {
-              evolutionPending = { pokemon: updatedTeam[i], evolvesTo: evolved };
-            }
+          updatedTeam[i] = levelUp(updatedTeam[i]);
+          const evolved = await tryEvolve(updatedTeam[i]);
+          if (evolved) {
+            evolutions.push({ pokemon: updatedTeam[i], evolvesTo: evolved });
           }
         }
       }
 
       updateTeam(updatedTeam);
-
-      if (evolutionPending) {
-        setPendingEvolution(evolutionPending);
-      }
+      evolutions.forEach(e => addPendingEvolution(e));
 
       updateStats({ battlesWon: runStats.battlesWon + 1 });
 
@@ -101,14 +94,11 @@ export function BattleScreen() {
         completeNode(currentNode.id);
       }
 
-      // Check if all player Pokémon fainted (shouldn't happen if winner is player, but safety)
       const anyAlive = updatedTeam.some(p => p.currentHP > 0);
       if (!anyAlive) {
-        if (gameMode === 'nuzlocke') {
-          setScreen('gameover');
-        } else {
-          setScreen('gameover');
-        }
+        setScreen('gameover');
+      } else if (evolutions.length > 0) {
+        setScreen('evolution');
       } else {
         setScreen('reward');
       }

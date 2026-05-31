@@ -76,10 +76,12 @@ interface GameStore {
   // Reset
   resetRun: () => void;
 
-  // Evolution pending
+  // Evolution queue (shown one-by-one on the evolution screen)
+  pendingEvolutions: { pokemon: Pokemon; evolvesTo: Pokemon }[];
+  /** back-compat alias for the first in queue */
   pendingEvolution: { pokemon: Pokemon; evolvesTo: Pokemon } | null;
-  setPendingEvolution: (evo: GameStore['pendingEvolution']) => void;
-  confirmEvolution: () => void;
+  addPendingEvolution: (evo: { pokemon: Pokemon; evolvesTo: Pokemon }) => void;
+  confirmEvolution: () => void; // apply + dequeue first
 
   // Battle result
   lastBattleResult: 'win' | 'loss' | null;
@@ -227,7 +229,8 @@ export const useGameStore = create<GameStore>()(
             // Check evolution async
             tryEvolve(leveled).then(evolved => {
               if (evolved) {
-                get().setPendingEvolution({ pokemon: leveled, evolvesTo: evolved });
+                get().addPendingEvolution({ pokemon: leveled, evolvesTo: evolved });
+                get().setScreen('evolution');
               }
             });
             return;
@@ -300,20 +303,18 @@ export const useGameStore = create<GameStore>()(
       xpShareActive: false,
       setXpShare: (v) => set({ xpShareActive: v }),
 
-      pendingEvolution: null,
-      setPendingEvolution: (evo) => set({ pendingEvolution: evo }),
+      pendingEvolutions: [],
+      get pendingEvolution() { return get().pendingEvolutions[0] ?? null; },
+      addPendingEvolution: (evo) => set(s => ({ pendingEvolutions: [...s.pendingEvolutions, evo] })),
       confirmEvolution: () => {
-        const { pendingEvolution, playerTeam } = get();
-        if (!pendingEvolution) return;
+        const { pendingEvolutions, playerTeam } = get();
+        const current = pendingEvolutions[0];
+        if (!current) return;
 
-        const idx = playerTeam.findIndex(p => p.id === pendingEvolution.pokemon.id);
-        if (idx !== -1) {
-          const newTeam = [...playerTeam];
-          newTeam[idx] = pendingEvolution.evolvesTo;
-          set({ playerTeam: newTeam, pendingEvolution: null });
-        } else {
-          set({ pendingEvolution: null });
-        }
+        const idx = playerTeam.findIndex(p => p.id === current.pokemon.id && p.level === current.pokemon.level);
+        const newTeam = [...playerTeam];
+        if (idx !== -1) newTeam[idx] = current.evolvesTo;
+        set({ playerTeam: newTeam, pendingEvolutions: pendingEvolutions.slice(1) });
       },
 
       lastBattleResult: null,
@@ -342,7 +343,7 @@ export const useGameStore = create<GameStore>()(
           pendingEvent: null,
           pendingShop: null,
           xpShareActive: false,
-          pendingEvolution: null,
+          pendingEvolutions: [],
           lastBattleResult: null,
         });
       },

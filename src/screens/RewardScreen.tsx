@@ -42,15 +42,12 @@ export function RewardScreen() {
     addCoins,
     healTeam,
     setScreen,
-    pendingEvolution,
-    confirmEvolution,
     currentNode,
     lastBattleResult,
   } = useGameStore();
 
   const [selectedPokemon, setSelectedPokemon] = useState<Pokemon | null>(null);
   const [rewardTaken, setRewardTaken] = useState(false);
-  const [showEvolution, setShowEvolution] = useState(!!pendingEvolution);
 
   const handleTakePokemon = (pokemon: Pokemon) => {
     if (playerTeam.length >= 6) {
@@ -80,73 +77,6 @@ export function RewardScreen() {
     setPendingReward(null);
     setScreen('map');
   };
-
-  const handleConfirmEvolution = () => {
-    confirmEvolution();
-    setShowEvolution(false);
-  };
-
-  // Evolution popup
-  if (showEvolution && pendingEvolution) {
-    return (
-      <motion.div
-        className="min-h-screen flex flex-col items-center justify-center p-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-      >
-        <motion.div
-          className="text-center max-w-md"
-          initial={{ scale: 0.8, y: 30 }}
-          animate={{ scale: 1, y: 0 }}
-        >
-          <motion.div
-            className="text-6xl mb-4"
-            animate={{ rotate: [0, 360] }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-          >
-            🌟
-          </motion.div>
-          <h2 className="text-3xl font-black text-yellow-400 mb-2">Evolution!</h2>
-          <p className="text-white/70 mb-8">
-            {pendingEvolution.pokemon.displayName} is evolving into{' '}
-            <strong className="text-white">{pendingEvolution.evolvesTo.displayName}</strong>!
-          </p>
-
-          <div className="flex items-center justify-center gap-8 mb-8">
-            <div className="text-center">
-              <img
-                src={pendingEvolution.pokemon.sprite}
-                alt={pendingEvolution.pokemon.displayName}
-                style={{ imageRendering: 'pixelated', width: 96, height: 96 }}
-              />
-              <p className="text-white/50 text-sm mt-1">{pendingEvolution.pokemon.displayName}</p>
-            </div>
-            <motion.span
-              className="text-4xl"
-              animate={{ x: [0, 10, 0] }}
-              transition={{ duration: 1, repeat: Infinity }}
-            >
-              →
-            </motion.span>
-            <div className="text-center">
-              <motion.img
-                src={pendingEvolution.evolvesTo.sprite}
-                alt={pendingEvolution.evolvesTo.displayName}
-                style={{ imageRendering: 'pixelated', width: 96, height: 96 }}
-                animate={{ scale: [0.8, 1.1, 1] }}
-                transition={{ duration: 0.8 }}
-              />
-              <p className="text-yellow-400 text-sm mt-1 font-bold">{pendingEvolution.evolvesTo.displayName}</p>
-            </div>
-          </div>
-
-          <Button onClick={handleConfirmEvolution} size="lg">
-            ✓ Confirm Evolution
-          </Button>
-        </motion.div>
-      </motion.div>
-    );
-  }
 
   if (!pendingReward) {
     return (
