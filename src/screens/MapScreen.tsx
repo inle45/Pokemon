@@ -224,9 +224,16 @@ export function MapScreen() {
               >{region.name}</h1>
               <p className="text-[11px] text-white/40">Boss : {region.bossName}</p>
             </div>
-            <div className="flex items-center gap-3 text-xs text-white/70 shrink-0">
-              <span className="flex items-center gap-1">🪙 {coins}</span>
-              <span className="flex items-center gap-1">🎒 {items.length}</span>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-xs text-white/60 flex items-center gap-0.5">🪙 {coins}</span>
+              <button
+                onClick={() => setScreen('team')}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-white/15 bg-white/5 hover:bg-white/10 transition-all text-xs text-white/70 hover:text-white/90"
+              >
+                <span>👥</span>
+                <span className="font-bold">{playerTeam.length}</span>
+                {items.length > 0 && <span className="text-[9px] text-violet-400 font-black">· {items.length}</span>}
+              </button>
             </div>
           </div>
           {/* Region progress dots */}

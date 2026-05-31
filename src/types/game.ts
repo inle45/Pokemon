@@ -11,6 +11,7 @@ export type Screen =
   | 'battle'
   | 'reward'
   | 'shop'
+  | 'team'
   | 'event'
   | 'gameover'
   | 'victory';
