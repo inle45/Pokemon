@@ -69,13 +69,35 @@ function calcDamage(
   }
 
   const lifeOrb = attacker.heldItem === 'life-orb' ? 1.3 : 1;
-  const choiceBand = (attacker.heldItem === 'choice-band' && move.category === 'physical') ? 1.5 : 1;
-  const choiceSpecs = (attacker.heldItem === 'choice-specs' && move.category === 'special') ? 1.5 : 1;
   const expertBelt = (attacker.heldItem === 'expert-belt' && effectiveness > 1) ? 1.2 : 1;
+
+  // Ability damage modifiers (attacker)
+  const hpRatioAtk = attacker.currentHP / attacker.maxHP;
+  let abilityAtkMod = 1;
+  if (hpRatioAtk < 1 / 3) {
+    if (attacker.abilityName === 'blaze' && move.type === 'fire') abilityAtkMod = 1.5;
+    else if (attacker.abilityName === 'torrent' && move.type === 'water') abilityAtkMod = 1.5;
+    else if (attacker.abilityName === 'overgrow' && move.type === 'grass') abilityAtkMod = 1.5;
+    else if (attacker.abilityName === 'swarm' && move.type === 'bug') abilityAtkMod = 1.5;
+  }
+  if (attacker.abilityName === 'technician' && move.power > 0 && move.power <= 60) abilityAtkMod *= 1.5;
+  if (attacker.abilityName === 'adaptability' && attacker.types.includes(move.type)) abilityAtkMod *= 4 / 3; // STAB 2.0 instead of 1.5
+  const stabMod = (attacker.abilityName === 'adaptability' && attacker.types.includes(move.type)) ? 2.0 : stab;
+
+  // Ability damage modifiers (defender)
+  let abilityDefMod = 1;
+  if (defender.abilityName === 'thick-fat' && (move.type === 'fire' || move.type === 'ice')) abilityDefMod = 0.5;
+  if (defender.abilityName === 'water-absorb' && move.type === 'water') return { damage: 0, effectiveness: 0 };
+  if (defender.abilityName === 'volt-absorb' && move.type === 'electric') return { damage: 0, effectiveness: 0 };
+  if (defender.abilityName === 'flash-fire' && move.type === 'fire') return { damage: 0, effectiveness: 0 };
+  if (defender.abilityName === 'levitate' && move.type === 'ground') return { damage: 0, effectiveness: 0 };
+  if (defender.abilityName === 'sap-sipper' && move.type === 'grass') return { damage: 0, effectiveness: 0 };
+  if ((defender.abilityName === 'lightning-rod' || defender.abilityName === 'motor-drive') && move.type === 'electric') return { damage: 0, effectiveness: 0 };
+  if (defender.abilityName === 'storm-drain' && move.type === 'water') return { damage: 0, effectiveness: 0 };
 
   const baseDamage = Math.floor(
     (((2 * attacker.level / 5 + 2) * move.power * atkStat / defStat) / 50 + 2)
-    * stab * effectiveness * critMultiplier * weatherMod * lifeOrb * choiceBand * choiceSpecs * expertBelt
+    * stabMod * effectiveness * critMultiplier * weatherMod * lifeOrb * expertBelt * abilityAtkMod * abilityDefMod
   );
 
   const randomFactor = (Math.floor(Math.random() * 16) + 85) / 100;
@@ -402,6 +424,35 @@ export function simulateBattle(
     enemyTeamHP: [...enemyHP],
   });
 
+  // ── Battle-start ability triggers ──────────────────────────────────────────
+  const WEATHER_ABILITIES: Record<string, WeatherEffect> = {
+    'drought': 'sun', 'drizzle': 'rain', 'sand-stream': 'sandstorm', 'snow-warning': 'hail',
+  };
+  const weatherLabels: Record<string, string> = {
+    rain: 'It started to rain!', sun: 'The sunlight turned harsh!',
+    sandstorm: 'A sandstorm kicked up!', hail: 'It started to hail!',
+  };
+
+  for (const side of [playerTeam[playerIndex], enemyTeam[enemyIndex]]) {
+    if (!side) continue;
+    const w = WEATHER_ABILITIES[side.abilityName];
+    if (w && !weather) {
+      weather = w;
+      weatherTurns = 8;
+      events.push({ type: 'weather', message: `${side.displayName}'s ${side.abilityName} — ${weatherLabels[w]}`, playerTeamHP: [...playerHP], enemyTeamHP: [...enemyHP] });
+    }
+    if (side.abilityName === 'intimidate') {
+      // Lower opponent ATK by 1
+      const opponent = side === playerTeam[playerIndex] ? enemyTeam[enemyIndex] : playerTeam[playerIndex];
+      const opponentSide = side === playerTeam[playerIndex] ? 'enemy' : 'player';
+      const opponentIdx = side === playerTeam[playerIndex] ? enemyIndex : playerIndex;
+      if (opponent) {
+        applyStatChanges(opponent, opponentSide, opponentIdx, { atk: -1 }, 'Intimidate', events, playerHP, enemyHP);
+        events.push({ type: 'stat_change', message: `${side.displayName}'s Intimidate lowered ${opponent.displayName}'s Attack!`, attackerSide: opponentSide === 'enemy' ? 'player' : 'enemy', attackerIndex: opponentIdx === enemyIndex ? playerIndex : enemyIndex, playerTeamHP: [...playerHP], enemyTeamHP: [...enemyHP] });
+      }
+    }
+  }
+
   // Executes one side's attack. Returns true if the defender fainted.
   const doAttack = (
     attacker: Pokemon,
@@ -554,8 +605,13 @@ export function simulateBattle(
         ? { damage: baseDamage }
         : calcDamage(attacker, defender, move, weather, false);
 
-      const actualDamage = Math.min(damage, defender.currentHP);
-      defender.currentHP = Math.max(0, defender.currentHP - damage);
+      // Sturdy: survive a one-hit KO from full HP
+      let actualDamage = Math.min(damage, defender.currentHP);
+      if (defender.abilityName === 'sturdy' && defender.currentHP === defender.maxHP && damage >= defender.currentHP) {
+        actualDamage = defender.currentHP - 1;
+        events.push({ type: 'held_item', message: `${defender.displayName} held on with Sturdy!`, playerTeamHP: [...playerHP], enemyTeamHP: [...enemyHP] });
+      }
+      defender.currentHP = Math.max(0, defender.currentHP - actualDamage);
       if (attackerSide === 'player') enemyHP[defenderIdx] = defender.currentHP;
       else playerHP[defenderIdx] = defender.currentHP;
       totalDamageDealt += actualDamage;
@@ -780,17 +836,35 @@ export function simulateBattle(
 
     if (playerFirst) {
       const enemyFainted = doAttack(player, enemy, 'player', playerIndex, enemyIndex, playerSkip);
+      if (enemyFainted && player.currentHP > 0 && player.abilityName === 'moxie') {
+        applyStatChanges(player, 'player', playerIndex, { atk: 1 }, 'Moxie', events, playerHP, enemyHP);
+      }
       if (!enemyFainted && player.currentHP > 0) {
-        doAttack(enemy, player, 'enemy', enemyIndex, playerIndex, enemySkip);
+        const playerFainted2 = doAttack(enemy, player, 'enemy', enemyIndex, playerIndex, enemySkip);
+        if (playerFainted2 && enemy.currentHP > 0 && enemy.abilityName === 'moxie') {
+          applyStatChanges(enemy, 'enemy', enemyIndex, { atk: 1 }, 'Moxie', events, playerHP, enemyHP);
+        }
       }
     } else {
       const playerFainted = doAttack(enemy, player, 'enemy', enemyIndex, playerIndex, enemySkip);
+      if (playerFainted && enemy.currentHP > 0 && enemy.abilityName === 'moxie') {
+        applyStatChanges(enemy, 'enemy', enemyIndex, { atk: 1 }, 'Moxie', events, playerHP, enemyHP);
+      }
       if (!playerFainted && enemy.currentHP > 0) {
-        doAttack(player, enemy, 'player', playerIndex, enemyIndex, playerSkip);
+        const enemyFainted2 = doAttack(player, enemy, 'player', playerIndex, enemyIndex, playerSkip);
+        if (enemyFainted2 && player.currentHP > 0 && player.abilityName === 'moxie') {
+          applyStatChanges(player, 'player', playerIndex, { atk: 1 }, 'Moxie', events, playerHP, enemyHP);
+        }
       }
     }
 
-    // End of turn
+    // End of turn — abilities + status
+    if (player.currentHP > 0 && player.abilityName === 'speed-boost') {
+      applyStatChanges(player, 'player', playerIndex, { speed: 1 }, 'Speed Boost', events, playerHP, enemyHP);
+    }
+    if (enemy.currentHP > 0 && enemy.abilityName === 'speed-boost') {
+      applyStatChanges(enemy, 'enemy', enemyIndex, { speed: 1 }, 'Speed Boost', events, playerHP, enemyHP);
+    }
     if (player.currentHP > 0) {
       const died = processTurnEndStatus(player, 'player', playerIndex, weather, events, playerHP, enemyHP);
       if (died) recordFaint(player, 'player', playerIndex, events, playerHP, enemyHP);

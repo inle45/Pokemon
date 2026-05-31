@@ -1,3 +1,6 @@
+import type { NatureName } from '../data/natures';
+export type { NatureName };
+
 export type PokemonType =
   | 'normal' | 'fire' | 'water' | 'electric' | 'grass' | 'ice'
   | 'fighting' | 'poison' | 'ground' | 'flying' | 'psychic' | 'bug'
@@ -60,6 +63,8 @@ export interface Pokemon {
   moves: MoveData[];
   status: StatusEffect;
   statusTurns: number;
+  nature: NatureName;
+  abilityName: string;
   heldItem: string | null;
   isShiny: boolean;
   xp: number;

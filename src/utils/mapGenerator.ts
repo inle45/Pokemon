@@ -201,7 +201,13 @@ export function getNodeColor(type: NodeType): string {
   return colors[type];
 }
 
+// Region 0 (Viridian): 5-17  |  Region 1 (Mt. Moon): 16-32
+// Region 2 (Route):   30-46  |  Region 3 (Celadon):  44-61
+// Region 4 (Victory): 57-79  (boss scales +6 beyond normal)
 export function getLevelRange(region: number, layer: number): [number, number] {
-  const base = region * 8 + layer * 2;
-  return [5 + base, 10 + base];
+  const regionBase = [5, 16, 30, 44, 57][Math.min(region, 4)];
+  const bossBonus = layer === 6 ? 6 : 0;
+  const min = regionBase + layer * 2 + bossBonus;
+  const max = min + 6;
+  return [min, max];
 }

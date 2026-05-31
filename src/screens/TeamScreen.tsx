@@ -7,6 +7,7 @@ import { HPBar } from '../components/ui/HPBar';
 import { TypeBadge } from '../components/ui/TypeBadge';
 import { getStatusLabel, getStatusColor } from '../utils/helpers';
 import { TYPE_COLORS } from '../data/typeChart';
+import { NATURES, type NatureName } from '../data/natures';
 import type { Item } from '../types/game';
 import type { Pokemon } from '../types/pokemon';
 
@@ -143,8 +144,31 @@ export function TeamScreen() {
                     {/* HP bar */}
                     <HPBar current={pokemon.currentHP} max={pokemon.maxHP} showNumbers height="sm" />
 
+                    {/* Nature + Ability */}
+                    <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                      {pokemon.nature && (() => {
+                        const nat = NATURES[pokemon.nature as NatureName];
+                        return (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/8 text-white/50 font-bold">
+                            {nat.label}
+                            {nat.increased && (
+                              <span className="text-red-400 ml-0.5">↑{nat.increased}</span>
+                            )}
+                            {nat.decreased && (
+                              <span className="text-blue-400 ml-0.5">↓{nat.decreased}</span>
+                            )}
+                          </span>
+                        );
+                      })()}
+                      {pokemon.abilityName && pokemon.abilityName !== 'none' && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/8 text-cyan-300/70 font-bold capitalize">
+                          {pokemon.abilityName.replace(/-/g, ' ')}
+                        </span>
+                      )}
+                    </div>
+
                     {/* Held item + XP */}
-                    <div className="flex items-center justify-between mt-2 gap-2">
+                    <div className="flex items-center justify-between mt-1.5 gap-2">
                       <span className="text-[10px] text-white/35 truncate min-w-0">
                         {pokemon.heldItem ? `🎽 ${pokemon.heldItem}` : 'Sans objet tenu'}
                       </span>
