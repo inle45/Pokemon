@@ -2,8 +2,10 @@ import { useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Pokemon } from '../../types/pokemon';
 import { useBattleStore } from '../../stores/battleStore';
+import { useGameStore } from '../../stores/gameStore';
 import { PokemonSprite } from '../pokemon/PokemonSprite';
 import { BattleHPBox, PokeballRow } from './BattleHUD';
+import { getThemeForRegion } from '../../utils/regionThemes';
 
 interface BattleSceneProps {
   playerTeam: Pokemon[];
@@ -35,6 +37,11 @@ export function BattleScene({ playerTeam, enemyTeam, onBattleEnd }: BattleSceneP
     setAnimating,
     setSpeed,
   } = useBattleStore();
+
+  const { currentRegion, currentMap } = useGameStore();
+  const region = currentMap?.regions[currentRegion];
+  const theme = getThemeForRegion(region?.theme ?? 'route');
+  const sil = theme.silhouette;
 
   const advance = useCallback(() => {
     if (isComplete || isAnimating) return;
@@ -71,30 +78,39 @@ export function BattleScene({ playerTeam, enemyTeam, onBattleEnd }: BattleSceneP
       {/* === ARENA === */}
       <div className="relative w-full rounded-2xl overflow-hidden" style={{ aspectRatio: '4/3' }}>
 
-        {/* Sky gradient — four bands like DS games */}
-        <div className="absolute inset-0" style={{
-          background: 'linear-gradient(180deg, #4a7cbf 0%, #6fa8d8 35%, #a8cce0 55%, #c8e0c0 55%, #7ab870 70%, #5a9850 100%)',
-        }} />
+        {/* Sky gradient */}
+        <div className="absolute inset-0" style={{ background: theme.sky }} />
 
-        {/* Far-hill silhouette */}
+        {/* Cave dim overlay */}
+        {region?.theme === 'cave' && (
+          <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.35)' }} />
+        )}
+
+        {/* Silhouette — hills / stalactites / buildings / peaks */}
         <div className="absolute" style={{
-          bottom: '41%', left: 0, right: 0, height: '14%',
-          background: 'linear-gradient(to bottom, #6aaa5e, #4e8d44)',
-          borderRadius: '50% 50% 0 0 / 100% 100% 0 0',
-          opacity: 0.55,
+          left: 0,
+          right: 0,
+          height: sil.heightPct,
+          ...(sil.position === 'top'
+            ? { top: sil.topPct ?? '0%' }
+            : { bottom: sil.bottomPct ?? '41%' }),
+          background: sil.bg,
+          borderRadius: sil.borderRadius,
+          clipPath: sil.clipPath,
+          opacity: sil.opacity,
         }} />
 
-        {/* Near grass band */}
+        {/* Near ground band */}
         <div className="absolute" style={{
           bottom: 0, left: 0, right: 0, height: '46%',
-          background: 'linear-gradient(180deg, #6ab855 0%, #4d9440 45%, #3a7032 100%)',
+          background: theme.ground,
         }} />
 
         {/* Enemy dirt platform */}
         <div className="absolute" style={{
           top: '18%', right: '6%',
           width: 110, height: 22,
-          background: 'radial-gradient(ellipse, #c8a060 30%, #8a6030 100%)',
+          background: theme.platform,
           borderRadius: '50%',
           boxShadow: '0 4px 12px rgba(0,0,0,0.35)',
         }} />
@@ -103,7 +119,7 @@ export function BattleScene({ playerTeam, enemyTeam, onBattleEnd }: BattleSceneP
         <div className="absolute" style={{
           bottom: '22%', left: '4%',
           width: 136, height: 28,
-          background: 'radial-gradient(ellipse, #c8a060 30%, #8a6030 100%)',
+          background: theme.platform,
           borderRadius: '50%',
           boxShadow: '0 4px 12px rgba(0,0,0,0.35)',
         }} />

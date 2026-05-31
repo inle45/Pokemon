@@ -4,6 +4,7 @@ import { useGameStore } from '../stores/gameStore';
 import { Button } from '../components/ui/Button';
 import { PokemonSprite } from '../components/pokemon/PokemonSprite';
 import { getNodeColor, getLevelRange } from '../utils/mapGenerator';
+import { getThemeForRegion } from '../utils/regionThemes';
 import { NodeIcon } from '../components/map/NodeIcon';
 import { fetchMultiplePokemon, getRandomPokemonIds } from '../services/pokeapi';
 import { getWeightedRandomItem, generateShopStock } from '../data/items';
@@ -89,6 +90,7 @@ export function MapScreen() {
   if (!currentMap) return null;
 
   const region = currentMap.regions[currentRegion];
+  const regionThemeData = getThemeForRegion(region.theme);
   const regionNodes = currentMap.nodes.filter((n) => n.region === currentRegion);
   const layers = Array.from({ length: 7 }, (_, l) =>
     regionNodes.filter((n) => n.layer === l).sort((a, b) => a.position - b.position),
@@ -209,11 +211,17 @@ export function MapScreen() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Top bar */}
-      <div className="sticky top-0 z-30 bg-[#09090f]/90 backdrop-blur-md border-b border-white/10 px-4 py-3">
+      <div
+        className="sticky top-0 z-30 bg-[#09090f]/90 backdrop-blur-md border-b px-4 py-3"
+        style={{ borderBottomColor: regionThemeData.accent + '40' }}
+      >
         <div className="max-w-md mx-auto">
           <div className="flex items-center justify-between">
             <div className="min-w-0">
-              <h1 className="text-base font-black text-white truncate">{region.name}</h1>
+              <h1
+                className="text-base font-black truncate"
+                style={{ color: '#fff', textShadow: `0 0 12px ${regionThemeData.accent}99` }}
+              >{region.name}</h1>
               <p className="text-[11px] text-white/40">Boss : {region.bossName}</p>
             </div>
             <div className="flex items-center gap-3 text-xs text-white/70 shrink-0">
@@ -229,7 +237,7 @@ export function MapScreen() {
                 className="h-1 flex-1 rounded-full"
                 style={{
                   background:
-                    i < currentRegion ? '#4ade80' : i === currentRegion ? '#a78bfa' : 'rgba(255,255,255,0.12)',
+                    i < currentRegion ? '#4ade80' : i === currentRegion ? regionThemeData.accent : 'rgba(255,255,255,0.12)',
                 }}
               />
             ))}
@@ -238,7 +246,7 @@ export function MapScreen() {
       </div>
 
       {/* Map (scrollable) */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto" style={{ background: regionThemeData.mapBg }}>
         <div ref={innerRef} className="relative max-w-md mx-auto px-6 py-8">
           {/* Connection lines */}
           <svg
@@ -257,7 +265,7 @@ export function MapScreen() {
                   key={i}
                   d={`M ${a.x} ${a.y} C ${a.x} ${midY}, ${b.x} ${midY}, ${b.x} ${b.y}`}
                   fill="none"
-                  stroke={e.active ? '#a78bfa' : 'rgba(255,255,255,0.12)'}
+                  stroke={e.active ? regionThemeData.accent : 'rgba(255,255,255,0.12)'}
                   strokeWidth={e.active ? 2.5 : 2}
                   strokeDasharray={e.active ? undefined : '5 5'}
                   strokeLinecap="round"
